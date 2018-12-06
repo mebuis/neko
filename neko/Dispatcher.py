@@ -11,6 +11,7 @@ from io import BytesIO
 from typing import List, Dict, Any
 
 from neko.Common import Threat
+from neko.Common.DataStructures import ByteArray
 from neko.Common.DataStructures.OLE1 import OLE1Package
 from neko.Common.Utilities import MD5, SHA256
 from neko.Common.Utilities.Logger import logger
@@ -63,6 +64,10 @@ class Dispatcher:
             return "PNG"
         if data_header.startswith(b"GIF"):
             return "GIF"
+        if data_header.startswith(b"%!PS"):
+            return "PostScript"
+        if data_header.startswith(b"%PDF"):
+            return "PDF"
 
         if data_header.lower().startswith(b"<?xml"):
             return "XML"
@@ -84,7 +89,7 @@ class Dispatcher:
 
         logger.info(f"Dispatching \"{self.Label}\" (Type: {self.DataType}) ...")
         if self.DataType == "Unknown":
-            logger.info(f"File Header: {binascii.hexlify(data[:10]).upper()}")
+            logger.info(f"File Header:\n{ByteArray.HexDump(data[:32])}\n")
 
         try:
             if self.DataType == "OLE1Package":
