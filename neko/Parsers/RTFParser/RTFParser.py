@@ -155,7 +155,7 @@ class RTFParser(IParseable, IDebuggable):
             skip_remaining_data_if_next_control_word_is_unknown_type = False
 
             buffer_size = len(group)
-            buffer = list(b"" for _ in range(buffer_size))
+            buffer = [b""] * buffer_size
             ii = 0
 
             head = tail = group.OpenPosition
@@ -193,7 +193,7 @@ class RTFParser(IParseable, IDebuggable):
                             if (control_command.Command == "bin") and (control_command.DataLength > 0):
                                 parsed_objdata = b"".join(buffer)
 
-                                buffer = list(b"" for _ in range(buffer_size))
+                                buffer = [b""] * buffer_size
                                 ii = 0
                                 buffer[ii] = parsed_objdata[:len(parsed_objdata) // 2 * 2]
                                 ii += 1
@@ -206,7 +206,7 @@ class RTFParser(IParseable, IDebuggable):
                             elif control_command.Command == "'":
                                 parsed_objdata = b"".join(buffer)
 
-                                buffer = list(b"" for _ in range(buffer_size))
+                                buffer = [b""] * buffer_size
                                 ii = 0
                                 buffer[ii] = parsed_objdata[:len(parsed_objdata) // 2 * 2]  # discard the nibble due to buffer re-use
                                 ii += 1
@@ -229,7 +229,7 @@ class RTFParser(IParseable, IDebuggable):
                                     current_object.Data = binascii.unhexlify(parsed_objdata[:len(parsed_objdata) // 2 * 2])
                                     self.Objects.append(copy.deepcopy(current_object))  # make a copy of parsed object data
 
-                            buffer = list(b"" for _ in range(buffer_size))  # the hex buffer pointer is replaced, so just discard the former buffer
+                            buffer = [b""] * buffer_size  # the hex buffer pointer is replaced, so just discard the former buffer
                             ii = 0
 
                         if (control_command.Type == "Unknown") and (skip_remaining_data_if_next_control_word_is_unknown_type):

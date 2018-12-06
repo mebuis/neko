@@ -33,7 +33,7 @@ class CFBFParser(IParseable, IDebuggable):
         return 2 ** self.CFBFHeader.MiniSectorShift.Value
 
     def ReadSectorData(self, sector_id, data_length, sector_size):
-        buffer = [b"" for _ in range(data_length)]
+        buffer = [b""] * data_length
         ii = 0
 
         if sector_size == self.MiniSectorSize:
