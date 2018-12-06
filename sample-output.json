@@ -1,0 +1,118 @@
+{
+    "count": 16,
+    "1": {
+        "location": "sample.rtf",
+        "type": "FOUND_OLE1_PACKAGE",
+        "information": {
+            "ansi_label": "",
+            "unicode_label": "",
+            "md5": "",
+            "sha256": "",
+            "data": ""
+        }
+    },
+    "2": {
+        "location": "sample.rtf",
+        "type": "FOUND_RTF_OVERLAY_DATA",
+        "information": {
+            "data": ""
+        }
+    },
+    "3": {
+        "location": "sample.rtf",
+        "type": "FOUND_OLE1_EMBEDDED_OBJECT",
+        "information": {
+            "data": ""
+        }
+    },
+    "4": {
+        "location": "sample.rtf",
+        "type": "FOUND_OLE1_LINKED_OBJECTS",
+        "information": {
+            "count": 0
+        }
+    },
+    "5": {
+        "location": "sample.rtf",
+        "type": "FOUND_OLE1_EMBEDDED_OBJECTS",
+        "information": {
+            "count": 0
+        }
+    },
+    "6": {
+        "location": "sample.rtf",
+        "type": "FOUND_SOAP_MONIKER",
+        "information": {
+            "url": ""
+        }
+    },
+    "7": {
+        "location": "sample.rtf",
+        "type": "FOUND_COMPOSITED_FILE_MONIKER",
+        "information": {
+            "ansi_path": "",
+            "unicode_path": ""
+        }
+    },
+    "8": {
+        "location": "sample.rtf",
+        "type": "FOUND_COMPOSITED_URL_MONIKER",
+        "information": {
+            "url": ""
+        }
+    },
+    "9": {
+        "location": "sample.rtf",
+        "type": "FOUND_FILE_MONIKER",
+        "information": {
+            "ansi_path": "",
+            "unicode_path": ""
+        }
+    },
+    "10": {
+        "location": "sample.rtf",
+        "type": "FOUND_URL_MONIKER",
+        "information": {
+            "url": ""
+        }
+    },
+    "11": {
+        "location": "sample.rtf",
+        "type": "FOUND_MACRO",
+        "information": {}
+    },
+    "12": {
+        "location": "sample.rtf",
+        "type": "FOUND_OLE_CONTROL_EXTENSION",
+        "information": {}
+    },
+    "13": {
+        "location": "sample.rtf",
+        "type": "FOUND_ENCRYPTED_PACKAGE",
+        "information": {}
+    },
+    "14": {
+        "location": "sample.rtf",
+        "type": "FOUND_LOW_RISK_LEVEL_OBJECT",
+        "information": {
+            "type": "",
+            "clsid": ""
+        }
+    },
+    "15": {
+        "location": "sample.rtf",
+        "type": "FOUND_HIGH_RISK_LEVEL_OBJECT",
+        "information": {
+            "type": "",
+            "clsid": ""
+        }
+    },
+    "1": {
+        "location": "sample.rtf",
+        "type": "FOUND_UNKNOWN_OBJECT",
+        "information": {
+            "clsid": ""
+        }
+    },
+
+}

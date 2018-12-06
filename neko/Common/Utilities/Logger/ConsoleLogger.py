@@ -1,0 +1,90 @@
+# -*- encoding: UTF-8 -*-
+
+
+import copy
+import logging
+
+CONSOLE_RESET = "00"
+
+CONSOLE_SET_EFFECT_BOLD = "01"
+CONSOLE_SET_EFFECT_FAINT = "02"
+CONSOLE_SET_EFFECT_ITALIC = "03"
+CONSOLE_SET_EFFECT_UNDERLINE = "04"
+CONSOLE_SET_EFFECT_BLINK = "05"
+CONSOLE_SET_EFFECT_INVERSE = "07"
+CONSOLE_SET_EFFECT_STRIKETHROUGH = "09"
+
+CONSOLE_UNSET_EFFECT_BOLD = "21"
+CONSOLE_UNSET_EFFECT_FAINT = "21"
+CONSOLE_UNSET_EFFECT_ITALIC = "23"
+CONSOLE_UNSET_EFFECT_UNDERLINE = "24"
+CONSOLE_UNSET_EFFECT_BLINK = "25"
+CONSOLE_UNSET_EFFECT_INVERSE = "27"
+CONSOLE_UNSET_EFFECT_STRIKETHROUGH = "29"
+
+CONSOLE_SET_FOREGROUND_COLOR_BLACK = "30"
+CONSOLE_SET_FOREGROUND_COLOR_RED = "31"
+CONSOLE_SET_FOREGROUND_COLOR_GREEN = "32"
+CONSOLE_SET_FOREGROUND_COLOR_YELLOW = "33"
+CONSOLE_SET_FOREGROUND_COLOR_BLUE = "34"
+CONSOLE_SET_FOREGROUND_COLOR_MAGENTA = "35"
+CONSOLE_SET_FOREGROUND_COLOR_CYAN = "36"
+CONSOLE_SET_FOREGROUND_COLOR_WHITE = "37"
+CONSOLE_SET_FOREGROUND_COLOR_DEFAULT = "39"
+
+CONSOLE_SET_BACKGROUND_COLOR_BLACK = "40"
+CONSOLE_SET_BACKGROUND_COLOR_RED = "41"
+CONSOLE_SET_BACKGROUND_COLOR_GREEN = "42"
+CONSOLE_SET_BACKGROUND_COLOR_YELLOW = "43"
+CONSOLE_SET_BACKGROUND_COLOR_BLUE = "44"
+CONSOLE_SET_BACKGROUND_COLOR_MAGENTA = "45"
+CONSOLE_SET_BACKGROUND_COLOR_CYAN = "46"
+CONSOLE_SET_BACKGROUND_COLOR_WHITE = "47"
+CONSOLE_SET_BACKGROUND_COLOR_DEFAULT = "49"
+
+
+def GenerateEscapeSequence(*escape_codes):
+    return f"""\033[{";".join(escape_codes)}m"""
+
+
+class ConsoleLogger(logging.StreamHandler):
+    def __init__(self, use_colors = False):
+        super().__init__()
+
+        self.UseColors = use_colors
+
+    def emit(self, record):
+        if not self.UseColors:
+            return super().emit(record = record)
+
+        _record = copy.deepcopy(record)
+
+        level_name = _record.levelname
+        message = _record.msg
+
+        if level_name == "DEBUG":
+            style = GenerateEscapeSequence(CONSOLE_SET_FOREGROUND_COLOR_CYAN, CONSOLE_SET_BACKGROUND_COLOR_DEFAULT)
+        elif level_name == "INFO":
+            style = GenerateEscapeSequence(CONSOLE_SET_FOREGROUND_COLOR_GREEN, CONSOLE_SET_BACKGROUND_COLOR_DEFAULT)
+        elif level_name == "WARNING":
+            style = GenerateEscapeSequence(CONSOLE_SET_FOREGROUND_COLOR_YELLOW, CONSOLE_SET_BACKGROUND_COLOR_DEFAULT)
+        elif level_name == "ERROR":
+            style = GenerateEscapeSequence(CONSOLE_SET_FOREGROUND_COLOR_RED, CONSOLE_SET_BACKGROUND_COLOR_DEFAULT)
+        elif level_name == "CRITICAL":
+            style = GenerateEscapeSequence(CONSOLE_SET_FOREGROUND_COLOR_MAGENTA, CONSOLE_SET_BACKGROUND_COLOR_DEFAULT, CONSOLE_SET_EFFECT_BOLD)
+        else:
+            style = GenerateEscapeSequence(CONSOLE_SET_FOREGROUND_COLOR_DEFAULT, CONSOLE_SET_BACKGROUND_COLOR_DEFAULT)
+
+        _record.levelname = "{RESET_ESCAPE_SEQUENCE}{STYLE_ESCAPE_SEQUENCE}{LEVEL_NAME}{RESET_ESCAPE_SEQUENCE}".format(
+            RESET_ESCAPE_SEQUENCE = GenerateEscapeSequence(CONSOLE_RESET),
+            STYLE_ESCAPE_SEQUENCE = style,
+            LEVEL_NAME = level_name
+        )
+
+        _record.msg = "{RESET_ESCAPE_SEQUENCE}{STYLE_ESCAPE_SEQUENCE}{MESSAGE}{RESET_ESCAPE_SEQUENCE}".format(
+            RESET_ESCAPE_SEQUENCE = GenerateEscapeSequence(CONSOLE_RESET),
+            STYLE_ESCAPE_SEQUENCE = style,
+            MESSAGE = message
+        )
+
+        return super().emit(_record)
