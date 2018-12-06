@@ -24,6 +24,7 @@ from neko.Scanners.RTFScanner import RTFScanner
 class Dispatcher:
     results: Dict[int or str, Dict[str, Any]] = None
     i: int = None
+    checked_files: set = None
 
     def __init__(self, label, is_root_dispatcher = False):
         self.Data: bytes = None
@@ -31,6 +32,10 @@ class Dispatcher:
 
         self.Label = label
         self.IsRootDispatcher = is_root_dispatcher
+        if self.IsRootDispatcher:
+            Dispatcher.results = dict()
+            Dispatcher.i = 1
+            Dispatcher.checked_files = set()
 
         self.ThreatList: List[Threat] = list()
         self.ChildDispatchers: List[Dispatcher] = list()
@@ -52,13 +57,31 @@ class Dispatcher:
         if data_header.startswith(b"MZ"):
             return "PE"
 
+        if data_header.startswith(b"JFIF"):
+            return "JPEG"
+        if data_header.startswith(b"\x89PNG"):
+            return "PNG"
+        if data_header.startswith(b"GIF"):
+            return "GIF"
+
+        if data_header.lower().startswith(b"<?xml"):
+            return "XML"
+
         return "Unknown"
 
     def Dispatch(self, data: bytes):
         self.Data = data
         self.DataType = Dispatcher.DetectDataType(data)
 
-        logger.info("-" * 40)
+        sha256 = SHA256(data)
+        if sha256 not in Dispatcher.checked_files:
+            Dispatcher.checked_files.add(sha256)
+        else:
+            return  # skip checked files
+
+        if self.DataType in ["XML"]:  # currently unsupported, be quiet
+            return
+
         logger.info(f"Dispatching \"{self.Label}\" (Type: {self.DataType}) ...")
         if self.DataType == "Unknown":
             logger.info(f"File Header: {binascii.hexlify(data[:10]).upper()}")
@@ -102,13 +125,21 @@ class Dispatcher:
             elif self.DataType == "PKZip":
                 try:
                     zip_file = zipfile.ZipFile(BytesIO(data))
-                    for file_name in zip_file.namelist():  # extract and dispatch files
-                        dispatcher = Dispatcher(label = f"{self.Label} -> {file_name}")
-                        dispatcher.Dispatch(zip_file.read(file_name))
-                        self.ChildDispatchers.append(dispatcher)
-                except (zipfile.BadZipFile, zlib.error):
-                    logger.error("Failed to extract the files from the archive.")
+                except zipfile.BadZipFile:
+                    logger.error("Archive file corrupted.")
                     raise
+
+                for file_name in zip_file.namelist():  # extract and dispatch files
+                    if file_name.endswith("/"):  # folders
+                        continue
+                    dispatcher = Dispatcher(label = f"{self.Label} -> {file_name}")
+                    try:
+                        file_content = zip_file.read(file_name)
+                        dispatcher.Dispatch(file_content)
+                        self.ChildDispatchers.append(dispatcher)
+                    except (zipfile.BadZipFile, zlib.error):
+                        logger.error(f"Failed to extract {file_name}. Please extract it manually.")
+                        continue
 
             elif self.DataType == "PE":
                 logger.warning(f"Found PE file at {self.Label}.")
@@ -118,10 +149,6 @@ class Dispatcher:
             logger.critical(f"Failed to parse {self.Label}.")
 
     def GenerateJsonResult(self):
-        if self.IsRootDispatcher:
-            Dispatcher.results = dict()
-            Dispatcher.i = 1
-
         for threat in self.ThreatList:
             Dispatcher.results[Dispatcher.i] = dict()
             Dispatcher.results[Dispatcher.i]["location"] = threat.Location

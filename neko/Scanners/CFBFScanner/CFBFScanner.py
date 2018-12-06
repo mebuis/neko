@@ -26,7 +26,93 @@ class CFBFScanner:
         self.CheckDirectoryEntries()
         self.CheckOLEStreams()
 
+        self.CheckStreamData()
+
         return self
+
+    def CheckDirectoryEntryNames(self):
+        for entry in self.Parser.DirectoryEntries.values():
+            entry_name = entry.ObjectName.lower()  # stream names are case-insensitive
+
+            if ("MACRO" not in self.Flags) and (entry_name in frozenset(["_vba_project", "dir", "_srp_0", "projectlk", "projectwm", "project"])):
+                self.Dispatcher.ThreatList.append(
+                    Threat(
+                        location = self.Dispatcher.Label,
+                        type = "FOUND_MACRO",
+                        information = {}
+                    )
+                )
+                self.Flags.add("MACRO")
+
+            if ("OCX" not in self.Flags) and (entry_name in frozenset(["\\x03ocxname"])):
+                self.Dispatcher.ThreatList.append(
+                    Threat(
+                        location = self.Dispatcher.Label,
+                        type = "FOUND_OLE_CONTROL_EXTENSION",
+                        information = {}
+                    )
+                )
+                self.Flags.add("OCX")
+
+            if ("ENCRYPTED_PACKAGE" not in self.Flags) and (entry_name in frozenset(["encryptedpackage"])):
+                self.Dispatcher.ThreatList.append(
+                    Threat(
+                        location = self.Dispatcher.Label,
+                        type = "FOUND_ENCRYPTED_PACKAGE",
+                        information = {}
+                    )
+                )
+                self.Flags.add("ENCRYPTED_PACKAGE")
+
+    def CheckDirectoryEntryCLSIDs(self):
+        for entry in self.Parser.DirectoryEntries.values():
+            if entry.ObjectType.Value == DirectorySectorEntry.STREAM_OBJECT:
+                continue
+
+            clsid = str(entry.CLSID)
+            if clsid == CLSID_NULL:
+                continue  # unknown handler
+
+            elif clsid in LOW_RISK_LEVEL_OBJECTS:
+                if clsid not in self.Flags:
+                    self.Dispatcher.ThreatList.append(
+                        Threat(
+                            location = self.Dispatcher.Label,
+                            type = "FOUND_LOW_RISK_LEVEL_OBJECT",
+                            information = {
+                                "type": LOW_RISK_LEVEL_OBJECTS[clsid],
+                                "clsid": clsid
+                            }
+                        )
+                    )
+                    self.Flags.add(clsid)
+
+            elif clsid in HIGH_RISK_LEVEL_OBJECTS:
+                if clsid not in self.Flags:
+                    self.Dispatcher.ThreatList.append(
+                        Threat(
+                            location = self.Dispatcher.Label,
+                            type = "FOUND_HIGH_RISK_LEVEL_OBJECT",
+                            information = {
+                                "type": HIGH_RISK_LEVEL_OBJECTS[clsid],
+                                "clsid": clsid
+                            }
+                        )
+                    )
+                    self.Flags.add(clsid)
+
+            else:
+                if clsid not in self.Flags:
+                    self.Dispatcher.ThreatList.append(
+                        Threat(
+                            location = self.Dispatcher.Label,
+                            type = "FOUND_UNKNOWN_OBJECT",
+                            information = {
+                                "clsid": clsid
+                            }
+                        )
+                    )
+                    self.Flags.add(clsid)
 
     def CheckDirectoryEntries(self):
         self.CheckDirectoryEntryNames()
@@ -110,103 +196,21 @@ class CFBFScanner:
                     )
                 )
 
-    def CheckDirectoryEntryNames(self):
+    def CheckStreamData(self):
         for entry in self.Parser.DirectoryEntries.values():
-            entry_name = entry.ObjectName.lower()  # stream names are case-insensitive
-
-            if ("MACRO" not in self.Flags) and (entry_name in frozenset(["_vba_project", "dir", "_srp_0", "projectlk", "projectwm", "project"])):
-                self.Dispatcher.ThreatList.append(
-                    Threat(
-                        location = self.Dispatcher.Label,
-                        type = "FOUND_MACRO",
-                        information = {}
-                    )
-                )
-                self.Flags.add("MACRO")
-
-            if ("OCX" not in self.Flags) and (entry_name in frozenset(["\\x03ocxname"])):
-                self.Dispatcher.ThreatList.append(
-                    Threat(
-                        location = self.Dispatcher.Label,
-                        type = "FOUND_OLE_CONTROL_EXTENSION",
-                        information = {}
-                    )
-                )
-                self.Flags.add("OCX")
-
-            if ("ENCRYPTED_PACKAGE" not in self.Flags) and (entry_name in frozenset(["encryptedpackage"])):
-                self.Dispatcher.ThreatList.append(
-                    Threat(
-                        location = self.Dispatcher.Label,
-                        type = "FOUND_ENCRYPTED_PACKAGE",
-                        information = {}
-                    )
-                )
-                self.Flags.add("ENCRYPTED_PACKAGE")
-
-    def CheckDirectoryEntryCLSIDs(self):
-        for entry in self.Parser.DirectoryEntries.values():
-            if entry.ObjectType.Value == DirectorySectorEntry.STREAM_OBJECT:
+            if entry.ObjectType.Value != DirectorySectorEntry.STREAM_OBJECT:
                 continue
 
-            clsid = str(entry.CLSID)
-            if clsid == CLSID_NULL:
-                continue  # unknown handler
+            entry_name = entry.ObjectName.lower()
+            if entry_name.startswith(("\\x01", "\\x03", "\\x05")) and (entry_name != "\\x01ole10native"):
+                continue
 
-            elif clsid in LOW_RISK_LEVEL_OBJECTS:
-                if clsid not in self.Flags:
-                    self.Dispatcher.ThreatList.append(
-                        Threat(
-                            location = self.Dispatcher.Label,
-                            type = "FOUND_LOW_RISK_LEVEL_OBJECT",
-                            information = {
-                                "type": LOW_RISK_LEVEL_OBJECTS[clsid],
-                                "clsid": clsid
-                            }
-                        )
-                    )
-                    self.Flags.add(clsid)
+            stream_data = entry.StreamData
+            if entry_name == "\\x01ole10native":
+                stream_data = LengthPrefixedByteArray().Parse(stream_data).Data
 
-            elif clsid in HIGH_RISK_LEVEL_OBJECTS:
-                if clsid not in self.Flags:
-                    self.Dispatcher.ThreatList.append(
-                        Threat(
-                            location = self.Dispatcher.Label,
-                            type = "FOUND_HIGH_RISK_LEVEL_OBJECT",
-                            information = {
-                                "type": HIGH_RISK_LEVEL_OBJECTS[clsid],
-                                "clsid": clsid
-                            }
-                        )
-                    )
-                    self.Flags.add(clsid)
-
-                    if HIGH_RISK_LEVEL_OBJECTS[clsid] == "OLE Package Object":
-                        for child_entry_id in entry.ChildList:
-                            child_entry = self.Parser.DirectoryEntries[child_entry_id]
-
-                            if child_entry.ObjectName.lower() == "\\x01ole10native":
-                                package_data = LengthPrefixedByteArray().Parse(child_entry.StreamData).Data
-                            elif child_entry.StreamData:
-                                package_data = child_entry.StreamData
-                            else:
-                                package_data = None
-
-                            if package_data and package_data.startswith(b"\x02\x00"):
-                                from neko import Dispatcher
-                                dispatcher = Dispatcher(label = f"{self.Dispatcher.Label} -> Directory Entry #{entry.EntryID}")
-                                dispatcher.Dispatch(package_data)
-                                self.Dispatcher.ChildDispatchers.append(dispatcher)
-
-            else:
-                if clsid not in self.Flags:
-                    self.Dispatcher.ThreatList.append(
-                        Threat(
-                            location = self.Dispatcher.Label,
-                            type = "FOUND_UNKNOWN_OBJECT",
-                            information = {
-                                "clsid": clsid
-                            }
-                        )
-                    )
-                    self.Flags.add(clsid)
+            if stream_data:
+                from neko import Dispatcher
+                dispatcher = Dispatcher(label = f"{self.Dispatcher.Label} -> Stream \"{entry.ObjectName}\"")
+                dispatcher.Dispatch(stream_data)
+                self.Dispatcher.ChildDispatchers.append(dispatcher)

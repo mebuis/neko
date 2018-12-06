@@ -3,6 +3,6 @@
 *.pyc
 *.pyd
 
-*.log
+*.log*
 
 local/
