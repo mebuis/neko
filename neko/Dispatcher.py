@@ -105,6 +105,7 @@ class Dispatcher:
                     for file_name in zip_file.namelist():  # extract and dispatch files
                         dispatcher = Dispatcher(label = f"{self.Label} -> {file_name}")
                         dispatcher.Dispatch(zip_file.read(file_name))
+                        self.ChildDispatchers.append(dispatcher)
                 except (zipfile.BadZipFile, zlib.error):
                     logger.error("Failed to extract the files from the archive.")
                     raise
