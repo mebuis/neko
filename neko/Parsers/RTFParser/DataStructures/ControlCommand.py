@@ -82,7 +82,7 @@ class ControlCommand(IParseable):
             return self
 
         buffer_size = 0xFF - 1  # the control word and the parameter are both null-terminated strings, and they share a buffer of 0xFF(255) bytes
-        buffer = list("" for _ in range(buffer_size))
+        buffer = [""] * buffer_size
         ii = 0
 
         while i < data_length:
@@ -101,7 +101,7 @@ class ControlCommand(IParseable):
         self.IsDataConsumer = SPECIAL_DATA_CONSUMERS.get(self.Command, self.Type.startswith("Destination"))  # assume that only "Destination" control words consume data
 
         buffer_size = 0xFF - 1 - len(self.Command) - 1
-        buffer = list("" for _ in range(buffer_size))
+        buffer = [""] * buffer_size
         ii = 0
 
         if (i < data_length) and (chr(data[i]) == "-") and (ii < buffer_size):
