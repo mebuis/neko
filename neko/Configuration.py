@@ -18,7 +18,7 @@ LOGGER_CONFIGURATION = {
     "ENABLE_FILE_LOGGER": True,
     "FILE_LOGGER_LEVEL": logging.DEBUG,
     "FILE_LOGGER_FILE_NAME": os.path.join(os.path.abspath(os.path.dirname(__file__)), "neko.log"),
-    "FILE_LOGGER_FILE_MAX_SIZE": 2 * 1024 * 1024,
+    "FILE_LOGGER_FILE_MAX_SIZE": 10 * 1024 * 1024,
     "FILE_LOGGER_FILE_ENCODING": "UTF-8",
     "FILE_LOGGER_FILE_BACKUP_COUNT": 5
 }

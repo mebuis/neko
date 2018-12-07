@@ -5,7 +5,6 @@ import binascii
 import json
 import string
 import traceback
-import zipfile
 import zlib
 from io import BytesIO
 from typing import List, Dict, Any
@@ -13,6 +12,7 @@ from typing import List, Dict, Any
 from neko.Common import Threat
 from neko.Common.DataStructures import ByteArray
 from neko.Common.DataStructures.OLE1 import OLE1Package
+from neko.Common.ModifiedPythonLibrary import zipfile
 from neko.Common.Utilities import MD5, SHA256
 from neko.Common.Utilities.Logger import logger
 from neko.Configuration import DEBUG
